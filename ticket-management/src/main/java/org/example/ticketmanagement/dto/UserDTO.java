@@ -1,0 +1,52 @@
+package org.example.ticketmanagement.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Max;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class UserDTO {
+    private Long id;
+
+    //后续如果对用户名或者真实名称等有具体的规则，可以在这里添加对应的注解
+    @NotBlank(message = "用户名不能为空")
+    @Size(min = 3, max = 20, message = "用户名长度必须在3-20个字符之间")
+    private String username;
+
+    @NotBlank(message = "邮箱不能为空")
+    @Email(message = "邮箱格式不正确")
+    private String email;
+
+    @Pattern(regexp = "^1[3-9]\\d{9}$", message = "手机号格式不正确")
+    private String phone;
+
+    @Size(max = 20, message = "昵称长度不能超过20个字符")
+    private String nickname;
+
+    private String avatar;
+
+    @Size(max = 10, message = "真实姓名长度不能超过10个字符")
+    private String realName;
+
+    @Min(value = 0, message = "性别值不合法")
+    @Max(value = 2, message = "性别值不合法")
+    private Integer gender;
+
+    private LocalDate birthday;
+    private Integer status;
+    private LocalDateTime lastLoginTime;
+    private String lastLoginIp;
+    private LocalDateTime createTime;
+    private LocalDateTime updateTime;
+}
