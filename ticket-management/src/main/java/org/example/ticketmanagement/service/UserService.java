@@ -18,6 +18,10 @@ public interface UserService {
      */
     User getUserByEmail(String email);
     /**
+     * 根据手机号查询用户
+     */
+    User getUserByPhone(String phone);
+    /**
      * 新增用户
      */
     void addUser(User user);

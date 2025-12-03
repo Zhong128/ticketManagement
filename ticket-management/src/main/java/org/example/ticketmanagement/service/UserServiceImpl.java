@@ -34,6 +34,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public User getUserByPhone(String phone) {
+        return UserMapper.getUserByPhone(phone);
+    }
+
+    @Override
     public void addUser(User user) {
         user.setCreateTime(LocalDateTime.now());
         user.setUpdateTime(LocalDateTime.now());
@@ -87,7 +92,7 @@ public class UserServiceImpl implements UserService {
             claims.put("id", u.getId());
             claims.put("username", u.getUsername());
             String jwt = JwtUtils.generateToken(claims);
-            return new LoginInfo(u.getId(), u.getUsername(), null, "token");
+            return new LoginInfo(u.getId(), u.getUsername(), null, jwt);
         }
 
 

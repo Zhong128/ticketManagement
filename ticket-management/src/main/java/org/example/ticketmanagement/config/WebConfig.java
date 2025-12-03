@@ -24,7 +24,7 @@ public class WebConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(tokenInterceptor)
                 .addPathPatterns("/**")
-                .excludePathPatterns("/login", "/register",
+                .excludePathPatterns("/login", "/logout","/register",
                                     "/api/auth/wechat/qrcode",
                                     "/api/auth/wechat/callback");
 

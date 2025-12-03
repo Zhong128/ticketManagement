@@ -49,7 +49,7 @@ public interface UserMapper {
     /**
      * 修改用户
      */
-    @Insert("update user set username=#{username},password=#{password},email=#{email},phone=#{phone},nickname=#{nickname},avatar=#{avatar},real_name=#{realName},id_card=#{idCard},gender=#{gender},birthday=#{birthday},status=#{status},last_login_time=#{lastLoginTime},last_login_ip=#{lastLoginIp}")
+    @Update("update user set username=#{username},password=#{password},email=#{email},phone=#{phone},nickname=#{nickname},avatar=#{avatar},real_name=#{realName},id_card=#{idCard},gender=#{gender},birthday=#{birthday},status=#{status},last_login_ip=#{lastLoginIp} where id=#{id}")
     void updateUser(User user);
 
     /**
@@ -64,6 +64,12 @@ public interface UserMapper {
      */
     @Select("select * from user where email= #{email}")
     User getUserByEmail(String email);
+
+    /**
+     * 根据手机号查询用户
+     */
+    @Select("select * from user where phone= #{phone}")
+    User getUserByPhone(String phone);
 
     /**
      * 根据邮箱和密码查询用户

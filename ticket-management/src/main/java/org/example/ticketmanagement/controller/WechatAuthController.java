@@ -8,6 +8,9 @@ import org.example.ticketmanagement.service.WechatService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Slf4j
 @RestController
 @RequestMapping("/api/auth/wechat")
@@ -23,12 +26,15 @@ public class WechatAuthController {
     public Result getQrCode() {
         try {
             String qrCodeUrl = wechatService.getLoginQrCode();
-            return Result.success(qrCodeUrl);
+            Map<String, String> data = new HashMap<>();
+            data.put("url", qrCodeUrl);//使用Map封装返回给前端(data类型必须为object)
+            return Result.success("获取二维码URL成功", data);
         } catch (Exception e) {
             log.error("获取微信二维码失败", e);
             return Result.error("获取微信登录二维码失败");
         }
     }
+
 
     /**
      * 微信授权回调接口

@@ -23,7 +23,7 @@ public class JwtUtils {
     /**
      * 令牌过期时间（12小时）
      */
-    private static final long EXPIRATION_TIME = 12 * 3600 * 1000; // 12小时
+    private static final long EXPIRATION_TIME = 12 * 3600 * 1000; // 12小时(实际上线时在没有加安全参数时可以改为30分钟提高安全性)
 
     /**
      * 生成JWT令牌

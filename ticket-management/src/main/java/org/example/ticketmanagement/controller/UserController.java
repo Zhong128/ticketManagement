@@ -110,6 +110,29 @@ public class UserController {
     @PostMapping
     public Result addUser(@Valid @RequestBody UserDTO userDTO) {
         log.info("新增用户: {}", userDTO);
+
+        // 检查用户名是否已存在
+        if (userDTO.getUsername() != null && !userDTO.getUsername().isEmpty()) {
+            User existingUser = userService.getUserByUsername(userDTO.getUsername());
+            if (existingUser != null) {
+                return Result.error("用户名已存在");
+            }
+        }
+        // 检查邮箱是否已存在
+        if (userDTO.getEmail() != null && !userDTO.getEmail().isEmpty()) {
+            User existingEmail = userService.getUserByEmail(userDTO.getEmail());
+            if (existingEmail != null) {
+                return Result.error("邮箱已存在");
+            }
+        }
+        //检查手机号是否已存在
+        if (userDTO.getPhone() != null && !userDTO.getPhone().isEmpty()) {
+            User existingPhone = userService.getUserByPhone(userDTO.getPhone());
+            if (existingPhone != null) {
+                return Result.error("手机号已存在");
+            }
+
+        }
         User user = new User();
         BeanUtils.copyProperties(userDTO, user);
         userService.addUser(user);
@@ -122,6 +145,12 @@ public class UserController {
     @DeleteMapping("/{id}")
     public Result deleteUserById(@PathVariable Long id) {
         log.info("根据id删除用户: {}", id);
+
+        // 先检查用户是否存在
+        User existingUser = userService.getUserById(id);
+        if (existingUser == null) {
+            return Result.error("用户不存在");
+        }
         userService.deleteUserById(id);
         return Result.success();
     }
@@ -132,6 +161,11 @@ public class UserController {
     @PutMapping
     public Result updateUser(@Valid @RequestBody UserDTO userDTO) {
         log.info("修改用户: {}", userDTO);
+        // 检查用户是否存在
+        User existingUser = userService.getUserById(userDTO.getId());
+        if (existingUser == null) {
+            return Result.error("用户不存在");
+        }
         User user = new User();
         BeanUtils.copyProperties(userDTO, user);
         userService.updateUser(user);

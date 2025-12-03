@@ -1,5 +1,6 @@
 package org.example.ticketmanagement.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -24,6 +25,10 @@ public class UserDTO {
     @Size(min = 3, max = 20, message = "用户名长度必须在3-20个字符之间")
     private String username;
 
+    @NotBlank(message = "密码不能为空")
+    @Size(min = 6, max = 20, message = "密码长度必须在6-20个字符之间")
+    private String password;
+
     @NotBlank(message = "邮箱不能为空")
     @Email(message = "邮箱格式不正确")
     private String email;
@@ -44,9 +49,15 @@ public class UserDTO {
     private Integer gender;
 
     private LocalDate birthday;
+    @Min(value = 0, message = "状态值不合法")
+    @Max(value = 1, message = "状态值不合法")
     private Integer status;
+    //使用JsonIgnore注解忽略该字段，不返回给前端
+    @JsonIgnore
     private LocalDateTime lastLoginTime;
     private String lastLoginIp;
+    @JsonIgnore
     private LocalDateTime createTime;
+    @JsonIgnore
     private LocalDateTime updateTime;
 }

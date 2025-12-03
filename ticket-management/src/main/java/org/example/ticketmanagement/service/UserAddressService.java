@@ -8,6 +8,14 @@ public interface UserAddressService {
      */
     UserAddress getUserAddressByUserId(Long userId);
     /**
+     * 根据id查询收货地址
+     */
+    UserAddress getUserAddressById(Long id);
+    /**
+     * 检查是否存在重复的收货地址
+     */
+    boolean isDuplicateAddress(UserAddress userAddress);
+    /**
      * 新增收货地址
      */
     void addUserAddress(UserAddress userAddress);

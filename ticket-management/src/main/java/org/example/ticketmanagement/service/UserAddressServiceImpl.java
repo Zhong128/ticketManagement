@@ -18,6 +18,17 @@ public class UserAddressServiceImpl implements UserAddressService{
     }
 
     @Override
+    public UserAddress getUserAddressById(Long id) {
+        return userAddressMapper.getUserAddressById(id);
+    }
+
+    @Override
+    public boolean isDuplicateAddress(UserAddress userAddress) {
+        return userAddressMapper.countDuplicateAddress(userAddress) > 0;
+    }
+
+
+    @Override
     public void addUserAddress(UserAddress userAddress) {
         userAddress.setCreateTime(LocalDateTime.now());
         userAddress.setUpdateTime(LocalDateTime.now());

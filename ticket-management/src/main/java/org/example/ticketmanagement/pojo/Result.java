@@ -1,7 +1,11 @@
 package org.example.ticketmanagement.pojo;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
+import java.util.HashMap;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @Data
 public class Result {
         private Integer code; //编码：1成功，0为失败
@@ -40,7 +44,11 @@ public class Result {
             result.code = 0;
             return result;
         }
-        public static Result success(String message, Object data) {
+    // 用于只需要消息的场景
+    public static Result success(String message) {
+        return new Result(1, message, new HashMap<>());
+    }
+    public static Result success(String message, Object data) {
             return new Result(1, message, data);
     }
 
