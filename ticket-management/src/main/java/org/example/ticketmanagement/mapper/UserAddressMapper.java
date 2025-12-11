@@ -22,6 +22,7 @@ public interface UserAddressMapper {
     /**
      * 根据用户ID和地址信息查询是否存在相同地址
      */
+    // TODO：刚刚试了一下，大麦没有做校验地址是否重复，我觉得这个不是很重要，没关系
     @Select("SELECT COUNT(*) FROM user_address WHERE user_id = #{userId} AND receiver_name = #{receiverName} AND receiver_phone = #{receiverPhone} AND province = #{province} AND city = #{city} AND district = #{district} AND detail_address = #{detailAddress}")
     int countDuplicateAddress(UserAddress userAddress);
 

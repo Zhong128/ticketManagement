@@ -1,7 +1,7 @@
 package org.example.ticketmanagement.service;
 
 import org.example.ticketmanagement.pojo.UserAddress;
-
+// TODO：接口和实现类要分开，实现类全部放在impl文件夹里
 public interface UserAddressService {
     /**
      * 根据用户id查询收货地址

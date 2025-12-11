@@ -52,6 +52,7 @@ public class LoginController {
      */
     @PostMapping("/logout")
     public Result logout(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+        // TODO：登出这样做是为了什么，目前看好像只是打印日志？
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             try {
                 String token = authHeader.substring(7);
@@ -83,6 +84,7 @@ public class LoginController {
         user.setBirthday(userRegisterDTO.getBirthday());
 
         // 检查用户名是否已存在
+        // TODO：如果是注册的话，按照逻辑来说应该只有邮箱注册来着？
         if (user.getUsername() != null && !user.getUsername().isEmpty()) {
             User existingUser = userService.getUserByUsername(user.getUsername());
             if (existingUser != null){

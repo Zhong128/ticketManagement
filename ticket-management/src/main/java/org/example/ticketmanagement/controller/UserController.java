@@ -108,10 +108,14 @@ public class UserController {
      * 新增用户
      */
     @PostMapping
+    // TODO: Controller应该只负责接收请求、调用Service、返回响应
+    // TODO：我看到有注册接口了，那这个接口是用来做什么的
+    // TODO：SpringSecurity很重，Satoken ｜ RBAC 角色权限模型
     public Result addUser(@Valid @RequestBody UserDTO userDTO) {
         log.info("新增用户: {}", userDTO);
 
         // 检查用户名是否已存在
+        // TODO：其实不是特别复杂的数据库操作之外，最耗时的是数据库连接事件，如果一个请求，需要三次查询操作，性能不好，如果数据不是很多的情况下可以考虑用OR
         if (userDTO.getUsername() != null && !userDTO.getUsername().isEmpty()) {
             User existingUser = userService.getUserByUsername(userDTO.getUsername());
             if (existingUser != null) {
@@ -126,6 +130,7 @@ public class UserController {
             }
         }
         //检查手机号是否已存在
+        // TODO：好像没有手机号登录？
         if (userDTO.getPhone() != null && !userDTO.getPhone().isEmpty()) {
             User existingPhone = userService.getUserByPhone(userDTO.getPhone());
             if (existingPhone != null) {

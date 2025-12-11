@@ -8,6 +8,7 @@ import org.example.ticketmanagement.pojo.UserAddress;
 import org.example.ticketmanagement.utils.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -15,6 +16,8 @@ import java.util.Map;
 
 @Slf4j
 @Service
+// TODO：看上去逻辑基本上都放在controller里了，代码规范要注意
+// TODO：也是一样的，增删改操作，需要在方法上加上注释@Transactional
 public class UserServiceImpl implements UserService {
     @Autowired
     private UserMapper UserMapper;
@@ -76,6 +79,7 @@ public class UserServiceImpl implements UserService {
         User u = null;
 
         // 判断是使用用户名还是邮箱登录
+        // TODO：不用用户名了
         if (user.getUsername() != null && !user.getUsername().isEmpty()) {
             // 用户名登录
             u = UserMapper.selectByUsernameAndPassword(user);
@@ -89,6 +93,7 @@ public class UserServiceImpl implements UserService {
             //生成JWT令牌
             Map<String, Object> claims = new HashMap<>();
             //添加自定义信息
+            // TODO：这边加了自定义信息，那是否能在拦截器中解析token后，进一步处理呢？
             claims.put("id", u.getId());
             claims.put("username", u.getUsername());
             String jwt = JwtUtils.generateToken(claims);

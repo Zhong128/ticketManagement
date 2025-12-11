@@ -32,6 +32,7 @@ public class TokenInterceptor implements HandlerInterceptor {
 //        String token = request.getHeader("token");
 
         // 精确匹配登录和注册路径
+        // TODO：webConfig不是已经排除路径了嘛
         if ("/login".equals(requestURI) || "/register".equals(requestURI)) {
             log.info("登录或注册操作，放行");
             return true;
@@ -68,5 +69,7 @@ public class TokenInterceptor implements HandlerInterceptor {
         //6．校验通过，放行
         log.info("令牌校验通过，放行");
         return true;
+
+        // TODO：你的token没有存点啥嘛？
     }
 }

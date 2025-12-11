@@ -53,6 +53,7 @@ public class UserDTO {
     @Max(value = 1, message = "状态值不合法")
     private Integer status;
     //使用JsonIgnore注解忽略该字段，不返回给前端
+    // TODO：其实可以根本不传
     @JsonIgnore
     private LocalDateTime lastLoginTime;
     private String lastLoginIp;

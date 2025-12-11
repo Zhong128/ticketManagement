@@ -22,6 +22,9 @@ public class UserAddressController {
      * 根据用户id查询收货地址
      */
     @GetMapping("{userId}")
+    // TODO：你有没有想过前端为什么可以拿到userId给你
+    // TODO：逻辑上来说肯定是某个时候你传递用户相关信息给前端过，然后前端才能带着userId给你
+    // TODO：线程安全上下文ThreadLocal UserContext
     public Result getUserAddressByUserId(@PathVariable Long userId) {
         log.info("根据用户id查询收货地址: {}", userId);
         //先检查用户是否存在
@@ -30,6 +33,7 @@ public class UserAddressController {
             return Result.error("用户不存在");
         }
         //再检查收货地址是否存在
+        // TODO：你想想你大麦如果没填收货地址，前端会返回一个报错弹窗说"用户未添加任何收货地址"吗？，按产品本身来说如果是空的，就是返回空的，然后可以允许有好几个收货地址，其中一个是默认的
         UserAddress existingUserAddress = UserAddressService.getUserAddressByUserId(userId);
         if (existingUserAddress == null) {
             return Result.error("用户未添加任何收货地址");
