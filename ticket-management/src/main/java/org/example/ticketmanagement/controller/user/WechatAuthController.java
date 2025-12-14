@@ -1,5 +1,7 @@
-package org.example.ticketmanagement.controller;
+package org.example.ticketmanagement.controller.user;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.example.ticketmanagement.dto.WechatLoginDTO;
 import org.example.ticketmanagement.dto.WechatLoginResultDTO;
@@ -14,6 +16,7 @@ import java.util.Map;
 @Slf4j
 @RestController
 @RequestMapping("/api/auth/wechat")
+@Tag(name = "客户端/微信登录", description = "微信登录相关接口")
 public class WechatAuthController {
 
     @Autowired
@@ -22,8 +25,9 @@ public class WechatAuthController {
     /**
      * 获取微信登录二维码URL
      */
+    @Operation(summary = "获取微信登录二维码", tags = {"客户端/微信登录"})
     @GetMapping("/qrcode")
-    public Result getQrCode() {
+    public Result<Map<String, String>> getQrCode() {
         try {
             String qrCodeUrl = wechatService.getLoginQrCode();
             Map<String, String> data = new HashMap<>();
@@ -39,8 +43,9 @@ public class WechatAuthController {
     /**
      * 微信授权回调接口
      */
+    @Operation(summary = "微信登录回调", tags = {"客户端/微信登录"})
     @PostMapping("/callback")
-    public Result callback(@RequestBody WechatLoginDTO loginDTO) {
+    public Result<WechatLoginResultDTO> callback(@RequestBody WechatLoginDTO loginDTO) {
         try {
             WechatLoginResultDTO result = wechatService.handleCallback(loginDTO.getCode(), loginDTO.getState());
             if (result.isSuccess()) {

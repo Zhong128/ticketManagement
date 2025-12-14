@@ -24,9 +24,19 @@ public class WebConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(tokenInterceptor)
                 .addPathPatterns("/**")
-                .excludePathPatterns("/login", "/logout","/register",
-                                    "/api/auth/wechat/qrcode",
-                                    "/api/auth/wechat/callback");
+                .excludePathPatterns(
+                        "/api/auth/user/login",           // 用户登录
+                        "/api/auth/user/register",        // 用户注册
+                        "/api/auth/admin/login",          // 管理员登录
+                        "/api/auth/wechat/**",            // 微信相关接口
+                        "/api/public/**",                 // 公共接口
+                        "/api/home/**",                   // 首页相关
+                        "/api/events/**",                 // 演出列表
+                        "/api/categories/**",             // 分类查询
+                        "/api/cities/**",                 // 城市查询
+                        "/error"                          // 错误页面
+                );
+
 
 
 

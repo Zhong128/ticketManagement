@@ -1,8 +1,12 @@
 package org.example.ticketmanagement.mapper;
 
 import org.apache.ibatis.annotations.*;
+import org.example.ticketmanagement.mapper.provider.UserSqlProvider;
 import org.example.ticketmanagement.pojo.User;
 import org.example.ticketmanagement.pojo.UserAddress;
+import org.example.ticketmanagement.pojo.UserQuery;
+
+import java.util.List;
 
 /**
  * The interface User mapper.
@@ -97,6 +101,29 @@ public interface UserMapper {
             "values(#{openId}, #{unionId}, #{nickname}, #{avatar}, #{username}, '', #{email}, 1, #{lastLoginTime}, #{createTime}, #{updateTime})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     void insertWechatUser(User user);
+
+    /**
+     * 分页查询用户列表
+     */
+    @SelectProvider(type = UserSqlProvider.class, method = "selectUsersByPage")
+    List<User> selectUsersByPage(UserQuery query);
+
+    /**
+     * 统计用户数量（用于分页）
+     */
+    @SelectProvider(type = UserSqlProvider.class, method = "countUsers")
+    Long countUsers(UserQuery query);
+
+    /**
+     * 根据多个ID查询用户
+     */
+    @Select("<script>" +
+            "SELECT * FROM user WHERE id IN " +
+            "<foreach collection='ids' item='id' open='(' separator=',' close=')'>" +
+            "#{id}" +
+            "</foreach>" +
+            "</script>")
+    List<User> selectUsersByIds(@Param("ids") List<Long> ids);
 
 
 }

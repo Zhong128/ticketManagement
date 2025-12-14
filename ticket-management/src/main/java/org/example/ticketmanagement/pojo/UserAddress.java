@@ -24,6 +24,7 @@ public class UserAddress {
     private String detailAddress;
     @Pattern(regexp = "^\\d{6}$", message = "邮政编码格式不正确，应为6位数字")
     private String postalCode;
+    private Integer isDefault; // 是否默认地址：0-否，1-是
     @JsonIgnore
     private LocalDateTime createTime;
     @JsonIgnore

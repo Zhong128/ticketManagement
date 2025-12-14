@@ -1,8 +1,8 @@
 package org.example.ticketmanagement.service;
 
-import org.example.ticketmanagement.pojo.LoginInfo;
-import org.example.ticketmanagement.pojo.User;
-import org.example.ticketmanagement.pojo.UserAddress;
+import org.example.ticketmanagement.pojo.*;
+
+import java.util.List;
 
 public interface UserService {
     /**
@@ -38,9 +38,19 @@ public interface UserService {
      */
     void registerUser(User user);
     /**
-     * 登录
+     * 分页查询用户列表
      */
-    LoginInfo login(User user);
+    PageResult<User> listUsers(UserQuery query);
+
+    /**
+     * 批量删除用户
+     */
+    void deleteUsersByIds(List<Long> ids);
+
+    /**
+     * 批量修改用户状态
+     */
+    void updateUsersStatus(List<Long> ids, Integer status);
 
 
 

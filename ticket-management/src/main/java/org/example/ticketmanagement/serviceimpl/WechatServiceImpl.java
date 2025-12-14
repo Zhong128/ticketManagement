@@ -1,4 +1,4 @@
-package org.example.ticketmanagement.service;
+package org.example.ticketmanagement.serviceimpl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.example.ticketmanagement.config.WechatConfig;
@@ -6,7 +6,7 @@ import org.example.ticketmanagement.dto.*;
 import org.example.ticketmanagement.mapper.UserMapper;
 import org.example.ticketmanagement.pojo.User;
 import org.example.ticketmanagement.service.WechatService;
-import org.example.ticketmanagement.utils.JwtUtils;
+import org.example.ticketmanagement.util.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;

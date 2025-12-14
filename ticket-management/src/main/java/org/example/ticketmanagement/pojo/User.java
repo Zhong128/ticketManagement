@@ -30,4 +30,6 @@ public class User {
     // 微信相关字段
     private String openId;
     private String unionId;
+    // 角色字段
+    private String role;
 }

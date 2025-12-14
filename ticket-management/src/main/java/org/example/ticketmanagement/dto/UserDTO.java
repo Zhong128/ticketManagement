@@ -1,6 +1,7 @@
 package org.example.ticketmanagement.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,6 +18,7 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class UserDTO {
     private Long id;
 
@@ -52,13 +54,7 @@ public class UserDTO {
     @Min(value = 0, message = "状态值不合法")
     @Max(value = 1, message = "状态值不合法")
     private Integer status;
-    //使用JsonIgnore注解忽略该字段，不返回给前端
-    // TODO：其实可以根本不传
-    @JsonIgnore
-    private LocalDateTime lastLoginTime;
-    private String lastLoginIp;
-    @JsonIgnore
-    private LocalDateTime createTime;
-    @JsonIgnore
-    private LocalDateTime updateTime;
+
+    @Pattern(regexp = "^(USER|ADMIN)$", message = "角色必须是USER或ADMIN")
+    private String role; // ✅ 新增角色字段
 }
