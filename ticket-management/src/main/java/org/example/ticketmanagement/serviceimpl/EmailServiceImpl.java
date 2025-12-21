@@ -82,12 +82,17 @@ public class EmailServiceImpl implements EmailService {
      */
     private String buildVerificationCodeContent(String code) {
         return String.format(
-                "尊敬的用户：\n\n" +
-                        "您的验证码是：%s\n\n" +
-                        "此验证码将在15分钟后失效，请勿泄露给他人。\n\n" +
-                        "如果不是您本人操作，请忽略此邮件。\n\n" +
-                        "感谢使用我们的服务！\n" +
-                        "票务管理系统团队",
+                """
+                        尊敬的用户：
+                        
+                        您的验证码是：%s
+                        
+                        此验证码将在15分钟后失效，请勿泄露给他人。
+                        
+                        如果不是您本人操作，请忽略此邮件。
+                        
+                        感谢使用我们的服务！
+                        票务管理系统团队""",
                 code
         );
     }
@@ -97,50 +102,51 @@ public class EmailServiceImpl implements EmailService {
      */
     private String buildVerificationCodeHtmlContent(String code) {
         return String.format(
-                "<!DOCTYPE html>\n" +
-                        "<html>\n" +
-                        "<head>\n" +
-                        "    <meta charset=\"UTF-8\">\n" +
-                        "    <title>验证码邮件</title>\n" +
-                        "    <style>\n" +
-                        "        .container {\n" +
-                        "            max-width: 600px;\n" +
-                        "            margin: 0 auto;\n" +
-                        "            padding: 20px;\n" +
-                        "            font-family: Arial, sans-serif;\n" +
-                        "        }\n" +
-                        "        .code {\n" +
-                        "            font-size: 24px;\n" +
-                        "            font-weight: bold;\n" +
-                        "            color: #1890ff;\n" +
-                        "            padding: 10px 20px;\n" +
-                        "            background-color: #f5f5f5;\n" +
-                        "            border-radius: 4px;\n" +
-                        "            display: inline-block;\n" +
-                        "            margin: 10px 0;\n" +
-                        "        }\n" +
-                        "        .footer {\n" +
-                        "            margin-top: 20px;\n" +
-                        "            color: #999;\n" +
-                        "            font-size: 12px;\n" +
-                        "        }\n" +
-                        "    </style>\n" +
-                        "</head>\n" +
-                        "<body>\n" +
-                        "    <div class=\"container\">\n" +
-                        "        <h2>验证码邮件</h2>\n" +
-                        "        <p>尊敬的用户：</p>\n" +
-                        "        <p>您正在使用邮箱进行注册/登录操作，验证码如下：</p>\n" +
-                        "        <div class=\"code\">%s</div>\n" +
-                        "        <p>此验证码将在15分钟后失效，请勿泄露给他人。</p>\n" +
-                        "        <p>如果不是您本人操作，请忽略此邮件。</p>\n" +
-                        "        <div class=\"footer\">\n" +
-                        "            <p>感谢使用我们的服务！</p>\n" +
-                        "            <p>票务管理系统团队</p>\n" +
-                        "        </div>\n" +
-                        "    </div>\n" +
-                        "</body>\n" +
-                        "</html>",
+                """
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <meta charset="UTF-8">
+                            <title>验证码邮件</title>
+                            <style>
+                                .container {
+                                    max-width: 600px;
+                                    margin: 0 auto;
+                                    padding: 20px;
+                                    font-family: Arial, sans-serif;
+                                }
+                                .code {
+                                    font-size: 24px;
+                                    font-weight: bold;
+                                    color: #1890ff;
+                                    padding: 10px 20px;
+                                    background-color: #f5f5f5;
+                                    border-radius: 4px;
+                                    display: inline-block;
+                                    margin: 10px 0;
+                                }
+                                .footer {
+                                    margin-top: 20px;
+                                    color: #999;
+                                    font-size: 12px;
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="container">
+                                <h2>验证码邮件</h2>
+                                <p>尊敬的用户：</p>
+                                <p>您正在使用邮箱进行注册/登录操作，验证码如下：</p>
+                                <div class="code">%s</div>
+                                <p>此验证码将在15分钟后失效，请勿泄露给他人。</p>
+                                <p>如果不是您本人操作，请忽略此邮件。</p>
+                                <div class="footer">
+                                    <p>感谢使用我们的服务！</p>
+                                    <p>票务管理系统团队</p>
+                                </div>
+                            </div>
+                        </body>
+                        </html>""",
                 code
         );
     }
