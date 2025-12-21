@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.HashMap;
 import java.util.Map;
 
-@Slf4j  // 添加日志记录
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
