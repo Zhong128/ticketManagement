@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -57,7 +58,10 @@ public class VerificationCodeServiceImpl implements VerificationCodeService {
 
         // 保存验证码到Redis，设置过期时间
         String codeKey = getCodeKey(email);
-        redisUtil.set(codeKey, code, expireTime, TimeUnit.MINUTES);
+        // 添加随机过期时间防止雪崩
+        int randomExpire = expireTime * 60 + new Random().nextInt(300); // ±5分钟随机
+        redisUtil.set(codeKey, code, randomExpire, TimeUnit.SECONDS);
+
 
         // 设置发送间隔
         String intervalKey = getIntervalKey(email);
