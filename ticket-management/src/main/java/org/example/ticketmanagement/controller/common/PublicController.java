@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RestController
 @RequestMapping("/api/public")
-@Tag(name = "公共接口", description = "无需认证的公共接口")
+@Tag(name = "公共接口/查重校验", description = "无需认证的公共接口")
 public class PublicController {
 
     @Autowired

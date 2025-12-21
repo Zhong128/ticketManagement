@@ -1,4 +1,4 @@
-// org/example/ticketmanagement/controller/common/CaptchaController.java
+
 package org.example.ticketmanagement.controller.common;
 
 import io.swagger.v3.oas.annotations.Operation;
