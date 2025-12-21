@@ -1,3 +1,4 @@
+// org/example/ticketmanagement/util/JwtUtils.java
 package org.example.ticketmanagement.util;
 
 import io.jsonwebtoken.Claims;
@@ -27,15 +28,16 @@ public class JwtUtils {
     private static final long EXPIRATION_TIME = 12 * 3600 * 1000; // 12小时(实际上线时在没有加安全参数时可以改为30分钟提高安全性)
 
     /**
-     * 生成JWT令牌（传入用户ID）
+     * 生成JWT令牌(模板方法)
      *
      * @param userId 用户ID
      * @return JWT令牌字符串
      */
-    public static String generateToken(Long userId) {
+    public static String createUserClaims(Long userId, String username, String role) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
-        claims.put("createTime", new Date());
+        claims.put("username", username);
+        claims.put("role", role != null ? role : "USER");
 
         return Jwts.builder()
                 .signWith(SECRET_KEY, SignatureAlgorithm.HS256)
@@ -46,7 +48,7 @@ public class JwtUtils {
 
 
     /**
-     * 生成JWT令牌
+     * 生成JWT令牌(通用方法)
      *
      * @param claims 自定义声明信息
      * @return JWT令牌字符串
@@ -124,19 +126,4 @@ public class JwtUtils {
         }
     }
 
-    /**
-     * 生成带角色的token
-     */
-    public static String generateTokenWithRole(Long userId, String role) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("userId", userId);
-        claims.put("role", role);
-        claims.put("createTime", new Date());
-
-        return Jwts.builder()
-                .signWith(SECRET_KEY, SignatureAlgorithm.HS256)
-                .addClaims(claims)
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                .compact();
-    }
 }

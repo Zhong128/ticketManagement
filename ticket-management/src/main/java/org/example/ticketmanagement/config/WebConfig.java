@@ -34,6 +34,7 @@ public class WebConfig implements WebMvcConfigurer {
                         "/api/events/**",                 // 演出列表
                         "/api/categories/**",             // 分类查询
                         "/api/cities/**",                 // 城市查询
+                        "/api/captcha/**",                // 图形验证码接口
                         "/error"                          // 错误页面
                 );
 

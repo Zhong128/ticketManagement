@@ -4,9 +4,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.example.ticketmanagement.dto.UserAddressDTO;
 import org.example.ticketmanagement.pojo.Result;
-import org.example.ticketmanagement.pojo.UserAddress;
 import org.example.ticketmanagement.service.UserAddressService;
+import org.example.ticketmanagement.vo.UserAddressVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,12 +28,23 @@ public class UserAddressController {
      */
     @Operation(summary = "获取收货地址列表", tags = {"客户端/收货中心"})
     @GetMapping
-    public Result<List<UserAddress>> getUserAddresses(HttpServletRequest request) {
+    public Result<List<UserAddressVO>> getUserAddresses(HttpServletRequest request) {
         Long userId = (Long) request.getAttribute("userId");
         log.info("获取用户收货地址，用户ID: {}", userId);
 
-        List<UserAddress> addresses = userAddressService.listUserAddressesByUserId(userId);
-        return Result.success(addresses);
+        try {
+            List<UserAddressVO> addresses = userAddressService.listUserAddressesByUserId(userId);
+            return Result.success(addresses);
+        } catch (IllegalArgumentException e) {
+            log.warn("参数错误: {}", e.getMessage());
+            return Result.error(400, e.getMessage());
+        } catch (RuntimeException e) {
+            log.warn("获取收货地址列表失败: {}", e.getMessage());
+            return Result.error(e.getMessage());
+        } catch (Exception e) {
+            log.error("获取收货地址列表失败: {}", e.getMessage(), e);
+            return Result.error("获取地址列表失败");
+        }
     }
 
     /**
@@ -40,18 +52,20 @@ public class UserAddressController {
      */
     @Operation(summary = "获取默认地址", tags = {"客户端/收货中心"})
     @GetMapping("/default")
-    public Result<UserAddress> getDefaultAddress(HttpServletRequest request) {
+    public Result<UserAddressVO> getDefaultAddress(HttpServletRequest request) {
         Long userId = (Long) request.getAttribute("userId");
         log.info("获取默认收货地址，用户ID: {}", userId);
 
-        // 先查询所有地址，然后筛选出默认的
-        List<UserAddress> addresses = userAddressService.listUserAddressesByUserId(userId);
-        UserAddress defaultAddress = addresses.stream()
-                .filter(address -> address.getIsDefault() != null && address.getIsDefault() == 1)
-                .findFirst()
-                .orElse(null);
-
-        return Result.success(defaultAddress);
+        try {
+            UserAddressVO defaultAddress = userAddressService.getDefaultAddress(userId);
+            return Result.success(defaultAddress);
+        } catch (RuntimeException e) {
+            log.warn("获取默认地址失败: {}", e.getMessage());
+            return Result.error(e.getMessage());
+        } catch (Exception e) {
+            log.error("获取默认地址失败: {}", e.getMessage(), e);
+            return Result.error("获取默认地址失败");
+        }
     }
 
     /**
@@ -59,16 +73,32 @@ public class UserAddressController {
      */
     @Operation(summary = "根据ID获取收货地址", tags = {"客户端/收货中心"})
     @GetMapping("/{id}")
-    public Result<UserAddress> getUserAddressById(@PathVariable Long id, HttpServletRequest request) {
+    public Result<UserAddressVO> getUserAddressById(@PathVariable Long id, HttpServletRequest request) {
         Long userId = (Long) request.getAttribute("userId");
         log.info("获取收货地址详情，地址ID: {}, 用户ID: {}", id, userId);
 
-        UserAddress address = userAddressService.getUserAddressById(id);
-        if (address == null || !address.getUserId().equals(userId)) {
-            return Result.error("收货地址不存在或无权访问");
-        }
+        try {
+            // 验证地址所有权
+            if (!userAddressService.validateAddressOwnership(id, userId)) {
+                return Result.error("收货地址不存在或无权访问");
+            }
 
-        return Result.success(address);
+            UserAddressVO address = userAddressService.getUserAddressById(id);
+            if (address == null) {
+                return Result.error("收货地址不存在");
+            }
+
+            return Result.success(address);
+        } catch (IllegalArgumentException e) {
+            log.warn("参数错误: {}", e.getMessage());
+            return Result.error(400, e.getMessage());
+        } catch (RuntimeException e) {
+            log.warn("获取收货地址详情失败: {}", e.getMessage());
+            return Result.error(e.getMessage());
+        } catch (Exception e) {
+            log.error("获取收货地址详情失败: {}", e.getMessage(), e);
+            return Result.error("获取地址详情失败");
+        }
     }
 
     /**
@@ -76,28 +106,30 @@ public class UserAddressController {
      */
     @Operation(summary = "新增收货地址", tags = {"客户端/收货中心"})
     @PostMapping
-    public Result<Void> addUserAddress(@Valid @RequestBody UserAddress userAddress, HttpServletRequest request) {
+    public Result<Void> addUserAddress(@Valid @RequestBody UserAddressDTO userAddressDTO, HttpServletRequest request) {
         Long userId = (Long) request.getAttribute("userId");
         log.info("新增收货地址，用户ID: {}", userId);
 
-        // 设置当前用户ID
-        userAddress.setUserId(userId);
+        try {
+            // 设置当前用户ID
+            userAddressDTO.setUserId(userId);
 
-        // 如果这是第一个地址，设为默认
-        List<UserAddress> existingAddresses = userAddressService.listUserAddressesByUserId(userId);
-        if (existingAddresses.isEmpty()) {
-            userAddress.setIsDefault(1); // 设为默认地址
-        } else {
-            userAddress.setIsDefault(0); // 非默认地址
+            boolean success = userAddressService.addUserAddress(userAddressDTO);
+            if (success) {
+                return Result.success("地址添加成功");
+            } else {
+                return Result.error("地址添加失败");
+            }
+        } catch (IllegalArgumentException e) {
+            log.warn("参数错误: {}", e.getMessage());
+            return Result.error(400, e.getMessage());
+        } catch (RuntimeException e) {
+            log.warn("新增收货地址失败: {}", e.getMessage());
+            return Result.error(e.getMessage());
+        } catch (Exception e) {
+            log.error("新增收货地址失败: {}", e.getMessage(), e);
+            return Result.error("地址添加失败");
         }
-
-        // 检查是否为重复地址（可选）
-        if (userAddressService.isDuplicateAddress(userAddress)) {
-            return Result.error("收货地址已存在");
-        }
-
-        userAddressService.addUserAddress(userAddress);
-        return Result.success();
     }
 
     /**
@@ -106,21 +138,33 @@ public class UserAddressController {
     @Operation(summary = "修改收货地址", tags = {"客户端/收货中心"})
     @PutMapping("/{id}")
     public Result<Void> updateUserAddress(@PathVariable Long id,
-                                          @Valid @RequestBody UserAddress userAddress,
+                                          @Valid @RequestBody UserAddressDTO userAddressDTO,
                                           HttpServletRequest request) {
         Long userId = (Long) request.getAttribute("userId");
         log.info("修改收货地址，地址ID: {}, 用户ID: {}", id, userId);
 
-        // 检查地址是否存在且属于当前用户
-        UserAddress existingAddress = userAddressService.getUserAddressById(id);
-        if (existingAddress == null || !existingAddress.getUserId().equals(userId)) {
-            return Result.error("收货地址不存在或无权操作");
-        }
+        try {
+            // 验证地址所有权
+            if (!userAddressService.validateAddressOwnership(id, userId)) {
+                return Result.error("收货地址不存在或无权操作");
+            }
 
-        // 确保用户ID不变
-        userAddress.setUserId(userId);
-        userAddressService.updateUserAddressById(id, userAddress);
-        return Result.success();
+            boolean success = userAddressService.updateUserAddressById(id, userAddressDTO);
+            if (success) {
+                return Result.success("地址修改成功");
+            } else {
+                return Result.error("地址修改失败");
+            }
+        } catch (IllegalArgumentException e) {
+            log.warn("参数错误: {}", e.getMessage());
+            return Result.error(400, e.getMessage());
+        } catch (RuntimeException e) {
+            log.warn("修改收货地址失败: {}", e.getMessage());
+            return Result.error(e.getMessage());
+        } catch (Exception e) {
+            log.error("修改收货地址失败: {}", e.getMessage(), e);
+            return Result.error("地址修改失败");
+        }
     }
 
     /**
@@ -132,14 +176,23 @@ public class UserAddressController {
         Long userId = (Long) request.getAttribute("userId");
         log.info("设置默认收货地址，地址ID: {}, 用户ID: {}", id, userId);
 
-        // 检查地址是否存在且属于当前用户
-        UserAddress existingAddress = userAddressService.getUserAddressById(id);
-        if (existingAddress == null || !existingAddress.getUserId().equals(userId)) {
-            return Result.error("收货地址不存在或无权操作");
+        try {
+            boolean success = userAddressService.setDefaultAddress(userId, id);
+            if (success) {
+                return Result.success("设置默认地址成功");
+            } else {
+                return Result.error("设置默认地址失败");
+            }
+        } catch (IllegalArgumentException e) {
+            log.warn("参数错误: {}", e.getMessage());
+            return Result.error(400, e.getMessage());
+        } catch (RuntimeException e) {
+            log.warn("设置默认地址失败: {}", e.getMessage());
+            return Result.error(e.getMessage());
+        } catch (Exception e) {
+            log.error("设置默认地址失败: {}", e.getMessage(), e);
+            return Result.error("设置默认地址失败");
         }
-
-        userAddressService.setDefaultAddress(userId, id);
-        return Result.success();
     }
 
     /**
@@ -151,18 +204,22 @@ public class UserAddressController {
         Long userId = (Long) request.getAttribute("userId");
         log.info("删除收货地址，地址ID: {}, 用户ID: {}", id, userId);
 
-        // 检查地址是否存在且属于当前用户
-        UserAddress existingAddress = userAddressService.getUserAddressById(id);
-        if (existingAddress == null || !existingAddress.getUserId().equals(userId)) {
-            return Result.error("收货地址不存在或无权操作");
+        try {
+            boolean success = userAddressService.deleteUserAddressById(id, userId);
+            if (success) {
+                return Result.success("地址删除成功");
+            } else {
+                return Result.error("地址删除失败");
+            }
+        } catch (IllegalArgumentException e) {
+            log.warn("参数错误: {}", e.getMessage());
+            return Result.error(400, e.getMessage());
+        } catch (RuntimeException e) {
+            log.warn("删除收货地址失败: {}", e.getMessage());
+            return Result.error(e.getMessage());
+        } catch (Exception e) {
+            log.error("删除收货地址失败: {}", e.getMessage(), e);
+            return Result.error("地址删除失败");
         }
-
-        // 如果是默认地址，需要处理（可选：可以设置为不允许删除默认地址）
-        if (existingAddress.getIsDefault() != null && existingAddress.getIsDefault() == 1) {
-            return Result.error("默认地址不能删除，请先设置其他地址为默认");
-        }
-
-        userAddressService.deleteUserAddressById(id);
-        return Result.success();
     }
 }

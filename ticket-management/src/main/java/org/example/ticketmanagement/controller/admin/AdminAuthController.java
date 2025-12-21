@@ -29,11 +29,10 @@ public class AdminAuthController {
     @Operation(summary = "管理员登录", tags = {"管理端/认证授权"})
     @PostMapping("/login")
     public Result<LoginResponseDTO> login(@Valid @RequestBody UserLoginDTO userLoginDTO) {
-        log.info("管理端登录: {}", userLoginDTO.getEmail() != null ? userLoginDTO.getEmail() : userLoginDTO.getUsername());
+        log.info("管理端登录: {}", userLoginDTO.getEmail());
 
         try {
             User user = new User();
-            user.setUsername(userLoginDTO.getUsername());
             user.setEmail(userLoginDTO.getEmail());
             user.setPassword(userLoginDTO.getPassword());
 

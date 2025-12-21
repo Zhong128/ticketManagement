@@ -9,34 +9,17 @@ public interface UserService {
      * 根据id查询用户
      */
     User getUserById(Long id);
-    /**
-     * 根据用户名查询用户
-     */
-    User getUserByUsername(String username);
-    /**
-     * 根据邮箱查询用户
-     */
-    User getUserByEmail(String email);
-    /**
-     * 根据手机号查询用户
-     */
-    User getUserByPhone(String phone);
-    /**
-     * 新增用户
-     */
-    void addUser(User user);
+
     /**
      * 根据id删除用户
      */
-    void deleteUserById(Long id);
+    boolean deleteUserById(Long id);
+
     /**
      * 修改用户
      */
-    void updateUser(User user);
-    /**
-     * 用户注册
-     */
-    void registerUser(User user);
+    boolean updateUser(User user);
+
     /**
      * 分页查询用户列表
      */
@@ -45,13 +28,31 @@ public interface UserService {
     /**
      * 批量删除用户
      */
-    void deleteUsersByIds(List<Long> ids);
+    boolean deleteUsersByIds(List<Long> ids);
 
     /**
      * 批量修改用户状态
      */
-    void updateUsersStatus(List<Long> ids, Integer status);
+    boolean updateUsersStatus(List<Long> ids, Integer status);
 
+    // 校验方法
+    /**
+     * 检查用户名是否已存在
+     */
+    boolean isUsernameExists(String username);
 
+    /**
+     * 检查邮箱是否已存在
+     */
+    boolean isEmailExists(String email);
 
+    /**
+     * 修改用户状态（带校验）
+     */
+    boolean updateUserStatus(Long userId, Integer status);
+
+    /**
+     * 修改密码（带旧密码验证）
+     */
+    boolean changePassword(Long userId, String oldPassword, String newPassword);
 }

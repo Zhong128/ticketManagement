@@ -53,9 +53,9 @@ public class TokenInterceptor implements HandlerInterceptor {
             return false;
         }
 
-        // 5. 校验令牌并提取用户ID
-        Long userId = null;
-        String role = null;
+        // 5. 校验令牌并提取用户ID和角色
+        Long userId;
+        String role;
         try {
             userId = JwtUtils.getUserIdFromToken(token);
             role = JwtUtils.getUserRoleFromToken(token);

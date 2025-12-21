@@ -1,70 +1,325 @@
 package org.example.ticketmanagement.serviceimpl;
 
+import lombok.extern.slf4j.Slf4j;
+import org.example.ticketmanagement.dto.UserAddressDTO;
 import org.example.ticketmanagement.mapper.UserAddressMapper;
+import org.example.ticketmanagement.pojo.PageResult;
 import org.example.ticketmanagement.pojo.UserAddress;
 import org.example.ticketmanagement.service.UserAddressService;
+import org.example.ticketmanagement.vo.UserAddressVO;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class UserAddressServiceImpl implements UserAddressService {
+
     @Autowired
     private UserAddressMapper userAddressMapper;
 
     @Override
-    public UserAddress getUserAddressByUserId(Long userId) {
-        return userAddressMapper.getUserAddressByUserId(userId);
+    public List<UserAddressVO> listUserAddressesByUserId(Long userId) {
+        log.debug("查询用户所有收货地址，用户ID: {}", userId);
+        try {
+            List<UserAddress> addresses = userAddressMapper.listUserAddressesByUserId(userId);
+            return addresses.stream()
+                    .map(this::convertToVO)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("查询用户收货地址失败，用户ID: {}", userId, e);
+            throw new RuntimeException("查询收货地址失败");
+        }
     }
 
     @Override
-    public List<UserAddress> listUserAddressesByUserId(Long userId) {
-        return userAddressMapper.listUserAddressesByUserId(userId);
+    public UserAddressVO getUserAddressById(Long id) {
+        log.debug("根据ID查询收货地址，地址ID: {}", id);
+        try {
+            UserAddress address = userAddressMapper.getUserAddressById(id);
+            if (address == null) {
+                log.debug("未找到收货地址，ID: {}", id);
+                return null;
+            }
+            return convertToVO(address);
+        } catch (Exception e) {
+            log.error("根据ID查询收货地址失败，地址ID: {}", id, e);
+            throw new RuntimeException("查询收货地址失败");
+        }
     }
 
-    @Override
-    public UserAddress getUserAddressById(Long id) {
-        return userAddressMapper.getUserAddressById(id);
-    }
+//   目前看实际项目这个校验没有必要，先暂且注释忽略
+//    @Override
+//    public boolean isDuplicateAddress(UserAddressDTO userAddressDTO) {
+//        log.debug("检查重复地址，用户ID: {}, 地址: {}",
+//                userAddressDTO.getUserId(), userAddressDTO.getDetailAddress());
+//        try {
+//            UserAddress userAddress = convertToEntity(userAddressDTO);
+//            int count = userAddressMapper.countDuplicateAddress(userAddress);
+//            return count > 0;
+//        } catch (Exception e) {
+//            log.error("检查重复地址失败，用户ID: {}", userAddressDTO.getUserId(), e);
+//            throw new RuntimeException("检查重复地址失败");
+//        }
+//    }
 
     @Override
-    public boolean isDuplicateAddress(UserAddress userAddress) {
-        return userAddressMapper.countDuplicateAddress(userAddress) > 0;
-    }
+    @Transactional
+    public boolean addUserAddress(UserAddressDTO userAddressDTO) {
+        log.info("新增收货地址，用户ID: {}", userAddressDTO.getUserId());
 
+        try {
+            // 设置默认值
+            if (userAddressDTO.getIsDefault() == null) {
+                userAddressDTO.setIsDefault(0); // 新增的地址默认不为默认地址
+            }
 
-    @Override
-    public void addUserAddress(UserAddress userAddress) {
-        userAddress.setCreateTime(LocalDateTime.now());
-        // TODO：后续这些重复的代码，可以考虑使用AOP切面统一修改
-        userAddress.setUpdateTime(LocalDateTime.now());
-        userAddressMapper.addUserAddress(userAddress);
-    }
+            // 验证必要字段
+            if (!validateAddressRequiredFields(userAddressDTO)) {
+                log.warn("新增收货地址失败，必要字段缺失");
+                throw new RuntimeException("收货地址必要字段缺失");
+            }
 
-    @Override
-    public void updateUserAddressById(Long id, UserAddress userAddress) {
-        userAddress.setId(id);
-        // TODO：同上，其他的实体类都一样
-        userAddress.setUpdateTime(LocalDateTime.now());
-        userAddressMapper.updateUserAddressById(userAddress);
-    }
+//            // 检查重复地址
+//            if (isDuplicateAddress(userAddressDTO)) {
+//                log.warn("新增收货地址失败，收货地址已存在");
+//                throw new RuntimeException("收货地址已存在");
+//            }
 
-    @Override
-    public void deleteUserAddressById(Long id) {
-        userAddressMapper.deleteUserAddressById(id);
+            // 如果用户没有地址，则设为默认
+            List<UserAddressVO> existingAddresses = listUserAddressesByUserId(userAddressDTO.getUserId());
+            if (existingAddresses.isEmpty()) {
+                userAddressDTO.setIsDefault(1);
+                log.debug("用户首次添加地址，设为默认");
+            } else {
+                // 如果设置为默认地址，需要先清除其他默认地址
+                if (userAddressDTO.getIsDefault() != null && userAddressDTO.getIsDefault() == 1) {
+                    userAddressMapper.clearDefaultAddress(userAddressDTO.getUserId());
+                    log.debug("清除原有默认地址标记");
+                }
+            }
+
+            // DTO转Entity
+            UserAddress userAddress = convertToEntity(userAddressDTO);
+            userAddress.setCreateTime(LocalDateTime.now());
+            userAddress.setUpdateTime(LocalDateTime.now());
+
+            // 插入数据库
+            userAddressMapper.addUserAddress(userAddress);
+            log.info("新增收货地址成功，地址ID: {}", userAddress.getId());
+
+            return true;
+
+        } catch (RuntimeException e) {
+            log.warn("新增收货地址失败: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("新增收货地址异常: {}", e.getMessage(), e);
+            throw new RuntimeException("新增收货地址失败");
+        }
     }
 
     @Override
     @Transactional
-    public void setDefaultAddress(Long userId, Long addressId) {
-        // 先清除该用户的所有默认地址标记
-        userAddressMapper.clearDefaultAddress(userId);
+    public boolean updateUserAddressById(Long id, UserAddressDTO userAddressDTO) {
+        log.info("修改收货地址，地址ID: {}", id);
 
-        // 设置新的默认地址
-        userAddressMapper.setDefaultAddress(addressId);
+        try {
+            // 检查地址是否存在
+            UserAddress existingAddress = userAddressMapper.getUserAddressById(id);
+            if (existingAddress == null) {
+                log.warn("修改收货地址失败，地址不存在，地址ID: {}", id);
+                throw new RuntimeException("收货地址不存在");
+            }
+
+            // 设置默认值
+            if (userAddressDTO.getIsDefault() == null) {
+                userAddressDTO.setIsDefault(0); // 新增的地址默认不为默认地址
+            }
+
+            // 验证必要字段
+            if (!validateAddressRequiredFields(userAddressDTO)) {
+                log.warn("修改收货地址失败，必要字段缺失");
+                throw new RuntimeException("收货地址必要字段缺失");
+            }
+
+//            // 检查重复地址
+//            userAddressDTO.setId(id);
+//            userAddressDTO.setUserId(existingAddress.getUserId());
+//            if (isDuplicateAddress(userAddressDTO)) {
+//                log.warn("修改收货地址失败，收货地址已存在");
+//                throw new RuntimeException("收货地址已存在");
+//            }
+
+            // 如果设置为默认地址，需要先清除其他默认地址
+            if (userAddressDTO.getIsDefault() != null && userAddressDTO.getIsDefault() == 1
+                    && existingAddress.getIsDefault() != 1) {
+                userAddressMapper.clearDefaultAddress(existingAddress.getUserId());
+                log.debug("清除原有默认地址标记");
+            }
+
+            // DTO转Entity
+            UserAddress userAddress = convertToEntity(userAddressDTO);
+            userAddress.setId(id);
+            userAddress.setUserId(existingAddress.getUserId());
+            userAddress.setCreateTime(existingAddress.getCreateTime());
+            userAddress.setUpdateTime(LocalDateTime.now());
+
+            // 更新数据库
+            userAddressMapper.updateUserAddressById(userAddress);
+            log.info("修改收货地址成功，地址ID: {}", id);
+
+            return true;
+
+        } catch (RuntimeException e) {
+            log.warn("修改收货地址失败: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("修改收货地址异常: {}", e.getMessage(), e);
+            throw new RuntimeException("修改收货地址失败");
+        }
+    }
+
+    @Override
+    @Transactional
+    public boolean deleteUserAddressById(Long id, Long userId) {
+        log.info("删除收货地址，地址ID: {}, 用户ID: {}", id, userId);
+
+        try {
+            // 检查地址是否存在
+            UserAddress existingAddress = userAddressMapper.getUserAddressById(id);
+            if (existingAddress == null) {
+                log.warn("删除收货地址失败，地址不存在，地址ID: {}", id);
+                throw new RuntimeException("收货地址不存在");
+            }
+
+            // 验证地址所有权
+            if (!existingAddress.getUserId().equals(userId)) {
+                log.warn("删除收货地址失败，无权删除该地址，地址ID: {}, 用户ID: {}", id, userId);
+                throw new RuntimeException("无权删除该地址");
+            }
+
+            // 检查是否为默认地址
+            if (existingAddress.getIsDefault() != null && existingAddress.getIsDefault() == 1) {
+                log.warn("删除收货地址失败，不能删除默认地址，地址ID: {}", id);
+                throw new RuntimeException("不能删除默认地址");
+            }
+
+            // 删除地址
+            userAddressMapper.deleteUserAddressById(id);
+            log.info("删除收货地址成功，地址ID: {}", id);
+
+            return true;
+
+        } catch (RuntimeException e) {
+            log.warn("删除收货地址失败: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("删除收货地址异常: {}", e.getMessage(), e);
+            throw new RuntimeException("删除收货地址失败");
+        }
+    }
+
+    @Override
+    @Transactional
+    public boolean setDefaultAddress(Long userId, Long addressId) {
+        log.info("设置默认收货地址，用户ID: {}, 地址ID: {}", userId, addressId);
+
+        try {
+            // 检查地址是否存在且属于用户
+            UserAddress existingAddress = userAddressMapper.getUserAddressById(addressId);
+            if (existingAddress == null) {
+                log.warn("设置默认收货地址失败，地址不存在，地址ID: {}", addressId);
+                throw new RuntimeException("收货地址不存在");
+            }
+
+            if (!existingAddress.getUserId().equals(userId)) {
+                log.warn("设置默认收货地址失败，无权操作该地址，地址ID: {}, 用户ID: {}", addressId, userId);
+                throw new RuntimeException("无权操作该地址");
+            }
+
+            // 先清除该用户的所有默认地址标记
+            userAddressMapper.clearDefaultAddress(userId);
+            log.debug("清除默认地址标记");
+
+            // 设置新的默认地址
+            userAddressMapper.setDefaultAddress(addressId);
+            log.info("设置默认地址成功，地址ID: {}", addressId);
+
+            return true;
+
+        } catch (RuntimeException e) {
+            log.warn("设置默认收货地址失败: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("设置默认收货地址异常: {}", e.getMessage(), e);
+            throw new RuntimeException("设置默认收货地址失败");
+        }
+    }
+
+    @Override
+    public UserAddressVO getDefaultAddress(Long userId) {
+        log.debug("获取用户默认地址，用户ID: {}", userId);
+
+        try {
+            List<UserAddress> addresses = userAddressMapper.listUserAddressesByUserId(userId);
+            UserAddress defaultAddress = addresses.stream()
+                    .filter(address -> address.getIsDefault() != null && address.getIsDefault() == 1)
+                    .findFirst()
+                    .orElse(null);
+
+            return defaultAddress != null ? convertToVO(defaultAddress) : null;
+        } catch (Exception e) {
+            log.error("获取默认地址失败，用户ID: {}", userId, e);
+            throw new RuntimeException("获取默认地址失败");
+        }
+    }
+
+    @Override
+    public boolean validateAddressOwnership(Long addressId, Long userId) {
+        log.debug("验证地址所有权，地址ID: {}, 用户ID: {}", addressId, userId);
+
+        try {
+            UserAddress address = userAddressMapper.getUserAddressById(addressId);
+            return address != null && address.getUserId().equals(userId);
+        } catch (Exception e) {
+            log.error("验证地址所有权失败，地址ID: {}, 用户ID: {}", addressId, userId, e);
+            throw new RuntimeException("验证地址所有权失败");
+        }
+    }
+
+    /**
+     * 验证地址必要字段
+     */
+    private boolean validateAddressRequiredFields(UserAddressDTO addressDTO) {
+        return StringUtils.hasText(addressDTO.getReceiverName()) &&
+                StringUtils.hasText(addressDTO.getReceiverPhone()) &&
+                StringUtils.hasText(addressDTO.getProvince()) &&
+                StringUtils.hasText(addressDTO.getCity()) &&
+                StringUtils.hasText(addressDTO.getDetailAddress());
+    }
+
+    /**
+     * DTO转Entity
+     */
+    private UserAddress convertToEntity(UserAddressDTO dto) {
+        UserAddress entity = new UserAddress();
+        BeanUtils.copyProperties(dto, entity);
+        return entity;
+    }
+
+    /**
+     * Entity转VO
+     */
+    private UserAddressVO convertToVO(UserAddress entity) {
+        UserAddressVO vo = new UserAddressVO();
+        BeanUtils.copyProperties(entity, vo);
+        return vo;
     }
 }
-

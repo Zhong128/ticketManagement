@@ -1,3 +1,4 @@
+// AdminUserDTO.java
 package org.example.ticketmanagement.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -16,15 +17,12 @@ import java.time.LocalDate;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class UserDTO {
+public class AdminUserDTO {
     private Long id;
 
-    //后续如果对用户名或者真实名称等有具体的规则，可以在这里添加对应的注解
     @NotBlank(message = "用户名不能为空")
     @Size(min = 3, max = 20, message = "用户名长度必须在3-20个字符之间")
     private String username;
-
 
     @NotBlank(message = "密码不能为空")
     @Size(min = 6, max = 20, message = "密码长度必须在6-20个字符之间")
@@ -50,10 +48,11 @@ public class UserDTO {
     private Integer gender;
 
     private LocalDate birthday;
+
     @Min(value = 0, message = "状态值不合法")
     @Max(value = 1, message = "状态值不合法")
     private Integer status;
 
     @Pattern(regexp = "^(USER|ADMIN)$", message = "角色必须是USER或ADMIN")
-    private String role; // ✅ 新增角色字段
+    private String role;
 }

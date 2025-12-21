@@ -32,9 +32,15 @@ public interface AuthService {
      * 用户注册
      */
     void register(User user);
+
     /**
      * 登录或注册（合并接口）
      * 用户存在则登录，不存在则注册并登录
      */
     LoginInfo loginOrRegister(User user);
+
+    /**
+     * 通过验证码完成注册
+     */
+    LoginInfo completeRegistrationWithCode(String email);
 }

@@ -1,0 +1,36 @@
+// org/example/ticketmanagement/service/VerificationCodeService.java
+package org.example.ticketmanagement.service;
+
+import java.util.concurrent.TimeUnit;
+
+public interface VerificationCodeService {
+    /**
+     * 发送验证码到邮箱
+     */
+    boolean sendVerificationCode(String email);
+
+    /**
+     * 重新发送验证码到邮箱
+     */
+    boolean resendVerificationCode(String email);
+
+    /**
+     * 验证验证码是否正确
+     */
+    boolean verifyCode(String email, String code);
+
+    /**
+     * 获取验证码剩余时间（秒）
+     */
+    Long getRemainingTime(String email);
+
+    /**
+     * 清除验证码（可用于某些场景下的手动清除）
+     */
+    void clearCode(String email);
+
+    /**
+     * 批量清除验证码（可选功能）
+     */
+    void clearCodes(String pattern);
+}

@@ -76,13 +76,6 @@ public interface UserMapper {
     User getUserByPhone(String phone);
 
     /**
-     * 根据邮箱和密码查询用户
-     */
-    // TODO：上面有根据邮箱查询的逻辑了，而邮箱是全局唯一，所以有没有密码查出来的都一样
-    @Select("select * from user where email=#{email} and password=#{password}")
-    User selectByEmailAndPassword(User user);
-
-    /**
      * 根据openId查询用户
      */
     @Select("select * from user where open_id = #{openId} and status = 1")

@@ -7,14 +7,13 @@ import org.example.ticketmanagement.mapper.UserMapper;
 import org.example.ticketmanagement.pojo.LoginInfo;
 import org.example.ticketmanagement.pojo.User;
 import org.example.ticketmanagement.service.AuthService;
+import org.example.ticketmanagement.service.VerificationCodeService;
 import org.example.ticketmanagement.util.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 
 @Slf4j
 @Service
@@ -26,15 +25,21 @@ public class AuthServiceImpl implements AuthService {
     @Autowired
     private TokenManager tokenManager;
 
+    @Autowired
+    private VerificationCodeService verificationCodeService;
+
     @Override
     public LoginInfo login(User user) {
         User u = null;
 
-        // 判断是使用用户名还是邮箱登录
-        if (user.getUsername() != null && !user.getUsername().isEmpty()) {
-            u = userMapper.selectByUsernameAndPassword(user);
-        } else if (user.getEmail() != null && !user.getEmail().isEmpty()) {
-            u = userMapper.selectByEmailAndPassword(user);
+        // 就只用邮箱登录
+        if (user.getEmail() != null && !user.getEmail().isEmpty()) {
+            u = userMapper.getUserByEmail(user.getEmail());
+
+            // 验证密码
+            if (u != null && !u.getPassword().equals(user.getPassword())) {
+                u = null; // 密码错误，置为空
+            }
         }
 
         if (u != null && u.getStatus() == 1) {
@@ -44,19 +49,14 @@ public class AuthServiceImpl implements AuthService {
             u.setLastLoginTime(LocalDateTime.now());
             userMapper.updateUser(u);
 
-            // 生成JWT令牌（包含角色信息）
-            Map<String, Object> claims = new HashMap<>();
-            claims.put("userId", u.getId());
-            claims.put("username", u.getUsername());
-            claims.put("role", u.getRole() != null ? u.getRole() : "USER");
-
-            String jwt = JwtUtils.generateToken(claims);
+            // 生成JWT令牌(使用的模板方法，传入信息)
+            String jwt = JwtUtils.createUserClaims(u.getId(), u.getUsername(), u.getRole());
             return new LoginInfo(u.getId(), u.getUsername(), null, jwt);
         } else if (u != null && u.getStatus() == 0) {
             throw new RuntimeException("用户已被禁用");
         }
 
-        throw new RuntimeException("用户名或密码错误");
+        throw new RuntimeException("邮箱或密码错误");
     }
 
     @Override
@@ -126,62 +126,90 @@ public class AuthServiceImpl implements AuthService {
     public LoginInfo loginOrRegister(User user) {
         log.info("登录/注册请求: email={}", user.getEmail());
 
-        // 1. 首先尝试登录
-        try {
-            // 构建一个只包含邮箱和密码的User对象用于登录验证
+        // 检查用户是否存在
+        User existingUser = userMapper.getUserByEmail(user.getEmail());
+        if (existingUser != null) {
+            // 老用户，直接登录
+            log.info("老用户登录: email={}", user.getEmail());
+
+            // 构建登录用户对象
             User loginUser = new User();
             loginUser.setEmail(user.getEmail());
             loginUser.setPassword(user.getPassword());
 
             return userLogin(loginUser);
-        } catch (RuntimeException loginException) {
-            // 2. 登录失败，检查是否是用户不存在
-            log.info("登录失败，尝试注册: {}", loginException.getMessage());
+        } else {
+            // 新用户，发送验证码并提示用户验证
+            log.info("新用户注册，发送验证码: email={}", user.getEmail());
 
-            // 检查是否是"用户不存在"或"用户名或密码错误"的情况
-            User existingUser = userMapper.getUserByEmail(user.getEmail());
-            if (existingUser != null) {
-                // 用户存在但登录失败，可能是密码错误或其他原因，直接抛出异常
-                throw loginException;
+            // 设置用户基本信息
+            if (user.getUsername() == null || user.getUsername().isEmpty()) {
+                String emailPrefix = user.getEmail().split("@")[0];
+                user.setUsername(emailPrefix);
             }
 
-            // 3. 用户不存在，进行注册
-            try {
-                // 设置注册所需的基本信息
-                if (user.getUsername() == null || user.getUsername().isEmpty()) {
-                    // 使用邮箱前缀作为用户名
-                    String emailPrefix = user.getEmail().split("@")[0];
-                    user.setUsername(emailPrefix);
-                }
-
-                if (user.getNickname() == null || user.getNickname().isEmpty()) {
-                    user.setNickname(user.getUsername());
-                }
-
-                user.setRole("USER");
-                user.setStatus(1);
-                user.setCreateTime(LocalDateTime.now());
-                user.setUpdateTime(LocalDateTime.now());
-                user.setLastLoginTime(LocalDateTime.now());
-
-                // 执行注册
-                register(user);
-                log.info("新用户注册成功: email={}, username={}", user.getEmail(), user.getUsername());
-
-                // 注册成功后登录
-                LoginInfo loginInfo = userLogin(user);
-                loginInfo.setIsNewUser(true); // 标记为新用户
-
-                return loginInfo;
-
-            } catch (DuplicateKeyException e) {
-                // 并发情况下，可能其他请求已经注册了该用户，此时重新尝试登录
-                log.info("注册时发现用户已存在（并发情况），重新尝试登录");
-                return userLogin(user);
-            } catch (Exception e) {
-                log.error("注册失败: {}", e.getMessage(), e);
-                throw new RuntimeException("注册失败: " + e.getMessage());
+            if (user.getNickname() == null || user.getNickname().isEmpty()) {
+                user.setNickname(user.getUsername());
             }
+
+            // 发送验证码
+            boolean sent = verificationCodeService.sendVerificationCode(user.getEmail());
+            if (!sent) {
+                throw new RuntimeException("验证码发送失败");
+            }
+
+            // 抛出特殊异常，提示前端需要验证码验证
+            throw new RuntimeException("NEW_USER_NEED_VERIFICATION");
+        }
+    }
+
+    @Override
+    public LoginInfo completeRegistrationWithCode(String email) {
+        log.info("完成验证码注册: email={}", email);
+
+        // 检查用户是否已存在
+        User existingUser = userMapper.getUserByEmail(email);
+        if (existingUser != null) {
+            throw new RuntimeException("用户已存在");
+        }
+
+        try {
+            // 创建新用户
+            User user = new User();
+            user.setEmail(email);
+            user.setPassword(""); // 验证码注册不需要密码
+
+            // 生成默认用户名
+            String emailPrefix = email.split("@")[0];
+            user.setUsername(emailPrefix);
+            user.setNickname(emailPrefix);
+
+            user.setRole("USER");
+            user.setStatus(1);
+            user.setCreateTime(LocalDateTime.now());
+            user.setUpdateTime(LocalDateTime.now());
+            user.setLastLoginTime(LocalDateTime.now());
+
+            // 执行注册
+            register(user);
+            log.info("新用户注册成功: email={}, username={}", email, user.getUsername());
+
+            // 注册成功后登录
+            String jwt = JwtUtils.createUserClaims(user.getId(), user.getUsername(), user.getRole());
+            LoginInfo loginInfo = new LoginInfo(user.getId(), user.getUsername(), null, jwt);
+            loginInfo.setIsNewUser(true); // 标记为新用户
+
+            return loginInfo;
+
+        } catch (DuplicateKeyException e) {
+            // 并发情况下，可能其他请求已经注册了该用户
+            log.info("注册时发现用户已存在（并发情况），重新尝试登录");
+            User existing = userMapper.getUserByEmail(email);
+            String jwt = JwtUtils.createUserClaims(existing.getId(), existing.getUsername(), existing.getRole());
+            return new LoginInfo(existing.getId(), existing.getUsername(), null, jwt);
+        } catch (Exception e) {
+            log.error("注册失败: {}", e.getMessage(), e);
+            throw new RuntimeException("注册失败: " + e.getMessage());
         }
     }
 }
