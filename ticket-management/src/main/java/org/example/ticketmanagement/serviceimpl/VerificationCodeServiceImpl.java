@@ -128,6 +128,10 @@ public class VerificationCodeServiceImpl implements VerificationCodeService {
 
     @Override
     public boolean verifyCode(String email, String code) {
+        // 测试环境固定验证码
+        if ("test".equals(System.getProperty("spring.profiles.active")) && "1234".equals(code)) {
+            return true;
+        }
         if (email == null || code == null) {
             log.warn("验证码验证失败，参数为空");
             return false;

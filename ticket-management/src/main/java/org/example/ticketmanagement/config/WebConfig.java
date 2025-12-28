@@ -13,8 +13,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Slf4j
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
-//    @Autowired
-//    private DomeInterceptor domeInterceptor;
     @Autowired
     private TokenInterceptor tokenInterceptor;
     /**
@@ -30,17 +28,20 @@ public class WebConfig implements WebMvcConfigurer {
                         "/api/auth/admin/login",          // 管理员登录
                         "/api/auth/wechat/**",            // 微信相关接口
                         "/api/public/**",                 // 公共接口
-                        "/api/home/**",                   // 首页相关
-                        "/api/events/**",                 // 演出列表
-                        "/api/categories/**",             // 分类查询
-                        "/api/cities/**",                 // 城市查询
+                        "/api/home/recommend/default",    // 默认首页推荐
+                        "/api/events",                    // 演出列表（公共）
+                        "/api/events/search/**",          // 演出搜索（公共）
+                        "/api/categories",                // 分类列表（公共）
+                        "/api/categories/search/**",      // 分类搜索（公共）
+                        "/api/cities",                    // 城市列表（公共）
+                        "/api/cities/search/**",          // 城市搜索（公共）
+                        "/api/sessions",                  // 场次列表（公共）
+                        "/api/sessions/upcoming",         // 即将开始场次（公共）
+                        "/api/ticket-tiers",              // 票档列表（公共）
+                        "/api/ticket-tiers/price-range",  // 价格范围查询（公共）
                         "/api/captcha/**",                // 图形验证码接口
                         "/error"                          // 错误页面
                 );
-
-
-
-
-
     }
+
 }

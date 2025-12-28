@@ -127,7 +127,7 @@ public class TokenInterceptor implements HandlerInterceptor {
      * 判断请求路径是否需要认证
      */
     private boolean requiresAuthentication(String requestURI) {
-        // 不需要认证的白名单
+        // 不需要认证的白名单 - 仅保留真正公开的接口
         String[] whiteList = {
                 "/api/auth/user/login",           // 用户登录
                 "/api/auth/user/register",        // 用户注册
@@ -135,10 +135,16 @@ public class TokenInterceptor implements HandlerInterceptor {
                 "/api/auth/wechat/qrcode",        // 微信二维码
                 "/api/auth/wechat/callback",      // 微信回调
                 "/api/home/recommend/default",    // 默认首页推荐
-                "/api/home/recommend/city/",      // 指定城市推荐
-                "/api/events",                    // 演出列表查询
-                "/api/categories",                // 分类查询
-                "/api/cities",                    // 城市查询
+                "/api/events",                    // 演出列表（公开）
+                "/api/events/search/**",          // 演出搜索（公开）
+                "/api/categories",                // 分类列表（公开）
+                "/api/categories/search/**",      // 分类搜索（公开）
+                "/api/cities",                    // 城市列表（公开）
+                "/api/cities/search/**",          // 城市搜索（公开）
+                "/api/sessions",                  // 场次列表（公开）
+                "/api/sessions/upcoming",         // 即将开始场次（公开）
+                "/api/ticket-tiers",              // 票档列表（公开）
+                "/api/ticket-tiers/price-range",  // 价格范围查询（公开）
                 "/api/public/**",                 // 所有公共接口
                 "/error"                          // 错误页面
         };
@@ -152,4 +158,7 @@ public class TokenInterceptor implements HandlerInterceptor {
         // 其他接口需要认证
         return true;
     }
+
+
+
 }

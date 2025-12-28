@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RestController
 @RequestMapping("/api/auth/user")
-@Tag(name = "客户端/认证注册", description = "用户登录、注册、退出等认证相关接口")
+@Tag(name = "客户端/认证模块", description = "用户登录、注册、退出等认证相关接口")
 public class UserAuthController {
 
     @Autowired
